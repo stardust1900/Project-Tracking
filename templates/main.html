@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}概览{% endblock %}
+
+{% block content %}
+<form action="/query" method="get">
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="inputGroup-sizing-default">项目名称</span>
+        <input type="text" class="form-control" aria-label="项目名称" aria-describedby="项目名称" name="qProjectName" value="{{qProjectName}}">
+
+        <span class="input-group-text" id="inputGroup-sizing-default">部门</span>
+        <select class="form-control form-select" aria-label="Default select example" name="qDept">
+            <option value="">---请选择---</option>
+            {% for dept in depts %}
+            <option value="{{dept.id}}" {% if dept.id == qDept %}selected{% endif %}>{{dept.name}}</option>
+            {% endfor %}
+        </select>
+
+        <span class="input-group-text" id="inputGroup-sizing-default">客户经理</span>
+        <select class="form-control form-select" aria-label="Default select example" name="qManager">
+            <option value="">---请选择---</option>
+            {% for manager in managers %}
+            <option value="{{manager.id}}" {% if manager.id == qManager %}selected{% endif %}>{{manager.name}}</option>
+            {% endfor %}
+        </select>
+
+        <span class="input-group-text" id="inputGroup-sizing-default">技术支持</span>
+        <select class="form-control form-select" aria-label="Default select example" name="qSupporter">
+            <option value="">---请选择---</option>
+            {% for supporter in supporters %}
+            <option value="{{supporter.id}}" {% if supporter.id == qSupporter %}selected{% endif %}>{{supporter.name}}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-outline-secondary">查询</button>
+    </div>
+</form>
+<div class="mb-3">
+    <a href="/downloadWord" class="btn btn-light">
+        <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-file-earmark-word" viewBox="0 0 16 16">
+            <path d="M5.485 6.879a.5.5 0 1 0-.97.242l1.5 6a.5.5 0 0 0 .967.01L8 9.402l1.018 3.73a.5.5 0 0 0 .967-.01l1.5-6a.5.5 0 0 0-.97-.242l-1.036 4.144-.997-3.655a.5.5 0 0 0-.964 0l-.997 3.655L5.485 6.88z"/>
+            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+          </svg>
+    </a>
+    <a href="#" class="btn btn-light">
+        <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-file-earmark-excel scale-150" viewBox="0 0 16 16">
+            <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+        </svg>
+    </a>
+</div>
+<dev class="mb-3">
+    <span class="badge text-bg-info">初始</span>
+    <span class="badge text-bg-light">对接中</span>
+    <span class="badge text-bg-primary">对接完成待上线</span>
+    <span class="badge text-bg-success">已上线</span>
+    <span class="badge text-bg-warning">本周无进展</span>
+    <span class="badge text-bg-danger">两周无进展</span>
+    <span class="badge text-bg-dark">长期无进展</span>
+    <span class="badge text-bg-secondary">终止</span>
+</dev>
+{% for product in products %}
+<div class="card mb-3">
+    <h3 class="card-header"> {{product.name}} <a href="/addProject?productId={{product.id}}" class="btn btn-primary">新增项目</a></h3>
+    <div class="card-body">
+        {% for project in projects %}
+        {% if project.product.id == product.id or project.product.parent_id == product.id%}
+        <div class="p-3 mb-2 {% if project.state==0 %} bg-info text-dark{% endif %} {% if project.state==1 %} bg-light text-dark{% endif %} {% if project.state==2 %} bg-primary text-white{% endif %} {% if project.state==3 %} bg-success text-white{% endif %} {% if project.state==4 %} bg-warning text-dark{% endif %} {% if project.state==5 %} bg-danger text-white{% endif %} {% if project.state==6 %} bg-dark text-white{% endif %} {% if project.state==7 %} bg-secondary text-white{% endif %}">
+            【{{project.product.name}}】{{project.merchant_name}} （{{project.dept.name}} {{project.manager.name}} {{project.input_date}}） 
+            {% for supporter in project.supporters %}
+            @{{supporter.name}}
+            {% endfor %}
+            <a href="/editProject?projectId={{project.id}}" class="link-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                </svg>
+            </a>
+            <br/>
+            {{project.instruction}}<br/>
+            {% for log in project.logs %}
+            {{log.input_date}} {{log.content}} 
+            <a href="/editLog?logId={{log.id}}" class="link-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                </svg>
+            </a>
+            <a href="#" class="link-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                </svg>
+            </a>
+            <br/>
+            {% endfor %}
+            <a href="/addLog?projectId={{project.id}}" class="link-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+            </a>
+        </div>
+        {% endif%}
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

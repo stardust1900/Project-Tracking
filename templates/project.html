@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}管理项目{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/flatpickr.min.css') }}">
+{% endblock %}
+{% block content %}
+<form action="/addProject" method="POST">
+    <div class="mb-3">
+        <label for="product" class="form-label">所属产品</label>
+        <select class="form-select" aria-label="产品" readonly name="productId">
+            <option selected value="{{product.id}}">{{product.name}}</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="merchantName" class="form-label">商户名称</label>
+        <input type="text" class="form-control" id="merchantName" name="merchantName" value="{{project.merchant_name or ''}}">
+        <input type="hidden" class="form-control" id="projectId" name="projectId" value="{{project.id or ''}}">
+    </div>
+    <div class="mb-3">
+        <label for="instruction" class="form-label">项目说明</label>
+        <textarea class="form-control" id="instruction" name="instruction" rows="3">{{project.instruction or ''}}</textarea>
+    </div>
+    <div class="mb-3">
+        <label for="input_date" class="form-label">录入日期</label>
+        <input type="text" id="input_date" name="input_date" class="form-control" value="{{project.input_date}}">
+    </div>
+    <div class="mb-3">
+        <label for="launch_date" class="form-label">上线日期</label>
+        <input type="text" id="input_date" name="launch_date" class="form-control" value="{{project.launch_date}}">
+    </div>
+    <div class="mb-3">
+        <label for="dept" class="form-label">所属部门</label>
+        <select class="form-select" aria-label="部门" readonly name="deptId">
+            {% for dept in depts %}
+            <option value="{{dept.id}}" {% if dept.id==project.dept_id %}selected{% endif %}>{{dept.name}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="manger" class="form-label">客户经理</label>
+        <select class="form-select" aria-label="客户经理" readonly name="manger">
+            {% for manager in managers %}
+            <option value="{{manager.id}}" {% if manager.id==project.manager_id %}selected{% endif %}>{{manager.name}}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="supportor" class="form-label">技术支持</label>
+        <select class="form-select" aria-label="产品" multiple name="supporters">
+            {% for supporter in supporters %}
+            <option value="{{supporter.id}}" {% if supporter in project.supporters %}selected{% endif %}>
+                {{supporter.name}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="projectState" id="projectState0" value="0" {% if project.state == 0 %}checked{% endif %}>
+            <label class="form-check-label" for="inlineRadio1"><span class="badge text-bg-info">初始</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="projectState" id="projectState1" value="1" {% if project.state == 1 %}checked{% endif %}>
+            <label class="form-check-label" for="inlineRadio1"><span class="badge text-bg-light">对接中</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="projectState" id="projectState2" value="2" {% if project.state == 2 %}checked{% endif %}>
+            <label class="form-check-label" for="inlineRadio1"><span
+                    class="badge text-bg-primary">对接完成待上线</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="projectState" id="projectState3" value="3" {% if project.state == 3 %}checked{% endif %}>
+            <label class="form-check-label" for="inlineRadio1"><span class="badge text-bg-success">已上线</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="projectState" id="projectState4" value="4" {% if project.state == 4 %}checked{% endif %}>
+            <label class="form-check-label" for="inlineRadio1"><span class="badge text-bg-warning">本周无进展</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="projectState" id="projectState5" value="5" {% if project.state == 5 %}checked{% endif %}>
+            <label class="form-check-label" for="inlineRadio1"><span class="badge text-bg-danger">两周无进展</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="projectState" id="projectState6" value="6" {% if project.state == 6 %}checked{% endif %}>
+            <label class="form-check-label" for="inlineRadio1"><span class="badge text-bg-dark">长期无进展</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="projectState" id="projectState7" value="7" {% if project.state == 7 %}checked{% endif %}>
+            <label class="form-check-label" for="inlineRadio1"><span class="badge text-bg-secondary">终止</span></label>
+        </div>
+
+    </div>
+    <div class="mb-3">
+        <label for="remark" class="form-label">备注</label>
+        <textarea class="form-control" id="remark" name="remark" rows="3"></textarea>
+    </div>
+    <div class="mb-3">
+        <button type="submit" class="btn btn-primary">{% if project.id %}修改{% else %}添加{% endif %}</button>
+        <a href="/" class="btn btn-secondary">返回</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block script %}
+<script src="{{ url_for('static', filename='js/flatpickr.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/zh.js') }}"></script>
+<script>
+    // document.addEventListener("DOMContentLoaded", function() {
+    //         flatpickr(document.getElementById("datepicker"), {
+    //             "locale": "zh",
+    //             dateFormat: "Y-m-d", // 设置日期格式
+    //             maxDate: "today" // 设置最大日期为今天
+    //         });
+    //     });
+    flatpickr(document.getElementById("input_date"), {
+        "locale": "zh",
+        dateFormat: "Ymd", // 设置日期格式
+        maxDate: "today" // 设置最大日期为今天
+    });
+
+    flatpickr(document.getElementById("launch_date"), {
+        "locale": "zh",
+        dateFormat: "Y-m-d", // 设置日期格式
+        maxDate: "today" // 设置最大日期为今天
+    });
+</script>
+{% endblock %}

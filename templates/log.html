@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}管理日志{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/flatpickr.min.css') }}">
+{% endblock %}
+{% block content %}
+<form action="/addLog" method="POST">
+    <div class="mb-3">
+        <label for="project" class="form-label">所属项目</label>
+        <input type="text" class="form-control" id="merchantName" name="merchantName" value="{{project.merchant_name}}" readonly>
+        <input type="hidden" class="form-control" id="projectId" name="projectId" value="{{project.id}}">
+        <input type="hidden" class="form-control" id="logId" name="logId" value="{{log.id or ''}}">
+    </div>
+    <div class="mb-3">
+        <label for="input_date" class="form-label">录入时间</label>
+        <input type="text" id="input_date" name="input_date" class="form-control" value="{{log.input_date}}">
+    </div>
+    <div class="mb-3">
+        <label for="content" class="form-label">日志内容</label>
+        <textarea class="form-control" id="content" name="content" rows="3">{{log.content or ''}}</textarea>
+    </div>
+    <div class="mb-3">
+        <button type="submit" class="btn btn-primary">{% if log.id %}修改{% else %}添加{% endif %}</button>
+        <a href="/" class="btn btn-secondary">返回</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block script %}
+<script src="{{ url_for('static', filename='js/flatpickr.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/zh.js') }}"></script>
+<script>
+    // document.addEventListener("DOMContentLoaded", function() {
+    //         flatpickr(document.getElementById("datepicker"), {
+    //             "locale": "zh",
+    //             dateFormat: "Y-m-d", // 设置日期格式
+    //             maxDate: "today" // 设置最大日期为今天
+    //         });
+    //     });
+    flatpickr(document.getElementById("input_date"), {
+        "locale": "zh",
+        dateFormat: "Y-m-d", // 设置日期格式
+        maxDate: "today" // 设置最大日期为今天
+    });
+</script>
+{% endblock %}
