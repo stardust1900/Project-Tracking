@@ -26,10 +26,7 @@
         <label for="input_date" class="form-label">录入日期</label>
         <input type="text" id="input_date" name="input_date" class="form-control" value="{{project.input_date}}">
     </div>
-    <div class="mb-3">
-        <label for="launch_date" class="form-label">上线日期</label>
-        <input type="text" id="input_date" name="launch_date" class="form-control" value="{{project.launch_date}}">
-    </div>
+    
     <div class="mb-3">
         <label for="dept" class="form-label">所属部门</label>
         <select class="form-select" aria-label="部门" readonly name="deptId">
@@ -90,7 +87,10 @@
             <input class="form-check-input" type="radio" name="projectState" id="projectState7" value="7" {% if project.state == 7 %}checked{% endif %}>
             <label class="form-check-label" for="inlineRadio1"><span class="badge text-bg-secondary">终止</span></label>
         </div>
-
+    </div>
+    <div class="mb-3">
+        <label for="launch_date" class="form-label">上线日期</label>
+        <input type="text" id="launch_date" name="launch_date" class="form-control" value="{{project.launch_date or ''}}">
     </div>
     <div class="mb-3">
         <label for="remark" class="form-label">备注</label>

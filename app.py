@@ -1,8 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import functools
 import io
 from docx import Document
 from docx.shared import Pt
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Border, Side
 from flask import Flask, flash, g, get_flashed_messages, redirect,render_template,request, send_file, url_for
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -23,6 +26,7 @@ formatter = logging.Formatter('%(levelname)s %(filename)s %(lineno)d %(message)s
 # 将日志记录器指定日志的格式
 file_log_handler.setFormatter(formatter)
 # 为全局的日志工具对象添加日志记录器
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 logging.getLogger().addHandler(file_log_handler)
 
 
@@ -256,6 +260,15 @@ def editLog():
 @app.route('/downloadWord')
 @login_required
 def downloadWord():
+
+    nearest_monday = get_nearest_monday()
+    logging.info('nearest_monday:%s',nearest_monday)
+
+    nearest_logs = Log.query.filter(Log.create_time >= nearest_monday).all()
+    project_ids = [log.project_id for log in nearest_logs]
+    target_projects = Project.query.filter(Project.id.in_(project_ids)).distinct().all()
+    products = Product.query.filter(Product.level==0).all()
+
     # 创建一个新的Word文档
     doc = Document()
 
@@ -274,14 +287,20 @@ def downloadWord():
     # 添加一级标题  标题18 小二  内容11
     # title = doc.add_heading('项目列表清单', level=1)
 
-    # 添加一个一级标题，并设置其字体为小二
-    title = doc.add_heading('一级标题', level=1)
-    run = title.runs[0]
-    # run.font.name = 'SimSun'  # 设置字体为宋体（小二）
-    run.font.size = Pt(18)  # 设置字体大小为 18 磅
+    for i,product in enumerate(products,start=1):
+        write_title(doc,num_to_chinese(i)+'、'+product.name)
+        for idx, project in enumerate(target_projects,start=1):
+            supporter_text = ''
+            for supporter in project.supporters:
+                supporter_text=supporter_text+'@'+supporter.name
 
-    # 添加一些文本
-    doc.add_paragraph('Hello, this is a sample docx file.')
+            p_list = '【%s】 %s （%s %s %s）%s' % (project.product.name,project.merchant_name,project.dept.name,project.manager.name,project.input_date,supporter_text)
+            write_list(doc,p_list,idx)
+            # 项目说明
+            doc.add_paragraph(project.instruction)
+            last_log = project.logs[-1]
+            doc.add_paragraph(last_log.input_date+' '+last_log.content)
+
 
     # 保存文档到内存中的字节流
     doc_stream = io.BytesIO()
@@ -293,3 +312,188 @@ def downloadWord():
     filename = '技术支持部周报%s.docx' % datetime.today().strftime('%Y-%m-%d')
     # 使用send_file方法发送文件
     return send_file(doc_stream, as_attachment=True, download_name=filename, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
+def write_title(doc,text):
+    # 添加一个一级标题，并设置其字体为小二
+    title = doc.add_heading(text, level=1)
+    run = title.runs[0]
+    # run.font.name = 'SimSun'  # 设置字体为宋体（小二）
+    run.font.size = Pt(18)  # 设置字体大小为 18 磅
+
+def write_list(doc,text,idx):
+    p = doc.add_paragraph()
+    run = p.add_run(f'{idx}. {text}')
+    run.font.size = Pt(14)
+    p_format = p.paragraph_format
+    p_format.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+    p_format.numbering_level = 0
+    p_format.first_line_indent = Pt(0)
+    p_format.left_indent = Pt(18)
+    p_format.numbering_start = idx
+
+def get_nearest_monday():
+    today = datetime.today()
+    days_since_monday = today.weekday()  # 0 表示周一，1 表示周二，依此类推
+    days_to_nearest_monday = (days_since_monday - 0) % 7
+    days_to_nearest_monday = 7 if days_to_nearest_monday == 0 else days_to_nearest_monday
+    nearest_monday = today - timedelta(days=days_to_nearest_monday)
+    return nearest_monday.date()
+
+def num_to_chinese(num):
+    num_dict = {
+        1: "一",
+        2: "二",
+        3: "三",
+        4: "四",
+        5: "五",
+        6: "六",
+        7: "七",
+        8: "八",
+        9: "九"
+    }
+    return num_dict.get(num, "")
+
+@app.route('/downloadExcel')
+@login_required
+def downloadExcel():
+    projects = Project.query.all()
+    nearest_monday = get_nearest_monday().strftime('%Y-%m-%d')
+    # list(filter(lambda p:qProjectName in p.merchant_name,projects))
+    complete_projects = list(filter(lambda p: p.state in [3] and p.launch_date and p.launch_date < nearest_monday ,projects))
+    tracking_projects = list(filter(lambda p: p.state in [0,1,2,4,5] or (p.state in [3] and (not p.launch_date or p.launch_date >= nearest_monday)),projects))
+    stopped_projects = list(filter(lambda p: p.state in [6,7] ,projects))
+
+    # logging.info('complete_projects:%s',complete_projects)
+    # logging.info('tracking_projects:%s',tracking_projects)
+    # logging.info('stopped_projects:%s',stopped_projects)
+      # 创建一个 Workbook 对象
+    wb = Workbook()
+    
+    # 创建第一个工作表
+    ws1 = wb.create_sheet(title="已完成项目")
+    headers = ['序号', '商户名称', '产品','产品详情','提交日期','完成日期','归属部门','客户经理','技术支持','备注']
+    ws1.append(headers)
+    ws1.column_dimensions['B'].width = 40
+    ws1.column_dimensions['D'].width = 100
+    row = []
+    for i,p in enumerate(complete_projects,start=1):
+        row.append(i)
+        row.append(p.merchant_name)
+        row.append(p.product.name)
+        row.append(p.instruction)
+        row.append(p.input_date)
+        row.append(p.launch_date)
+        row.append(p.dept.name)
+        row.append(p.manager.name)
+        spt = ''
+        for s in p.supporters:
+            spt = spt + s.name + ' '
+        row.append(spt)
+        row.append(p.remark)
+        ws1.append(row)
+        row.clear()
+
+    # 创建第二个工作表
+    ws2 = wb.create_sheet(title="跟进中项目")
+    headers = ['序号', '商户名称', '产品','产品详情','提交日期','归属部门','客户经理','技术支持','项目近期进展','备注']
+    ws2.append(headers)
+    ws2.column_dimensions['B'].width = 40
+    ws2.column_dimensions['D'].width = 100
+    ws2.column_dimensions['I'].width = 100
+    row = []
+    reds=[]
+    oranges=[]
+    greens=[]
+    blues=[]
+    for i,p in enumerate(tracking_projects,start=1):
+        row.append(i)
+        row.append(p.merchant_name)
+        row.append(p.product.name)
+        row.append(p.instruction)
+        row.append(p.input_date)
+        row.append(p.dept.name)
+        row.append(p.manager.name)
+        spt = ''
+        for s in p.supporters:
+            spt = spt + s.name + ' '
+        row.append(spt)
+        if p.logs :
+            row.append(p.logs[-1].content)
+        else:
+            row.append('')
+        row.append(p.remark)
+        ws2.append(row)
+        row.clear()
+        # 项目状态 0-初始 1-对接中 2-对接完成待上线 3-已上线 4-本周无进展 5-两周无进展 6-长期无进展 7-终止
+        if p.state == 4:
+            oranges.append(i+1)
+        elif p.state == 5:
+            reds.append(i+1)
+        elif p.state == 3:
+            greens.append(i+1)
+        elif p.state == 2:
+            blues.append(i+1) 
+    
+    change_color(ws2,oranges,'FFA500')
+    change_color(ws2,reds,'FF0000')
+    change_color(ws2,greens,'00FF00')
+    change_color(ws2,blues,'0000FF')
+    
+    # 创建第三个工作表
+    ws3 = wb.create_sheet(title="无进展项目")
+    headers = ['序号', '商户名称', '产品','产品详情','提交日期','归属部门','客户经理','技术支持','备注']
+    ws3.append(headers)
+    ws3.column_dimensions['B'].width = 40
+    ws3.column_dimensions['D'].width = 100
+    ws3.column_dimensions['I'].width = 100
+    row = []
+    for i,p in enumerate(tracking_projects,start=1):
+        row.append(i)
+        row.append(p.merchant_name)
+        row.append(p.product.name)
+        row.append(p.instruction)
+        row.append(p.input_date)
+        row.append(p.dept.name)
+        row.append(p.manager.name)
+        spt = ''
+        for s in p.supporters:
+            spt = spt + s.name + ' '
+        row.append(spt)
+        row.append(p.remark)
+        ws3.append(row)
+        row.clear()
+
+     # 删除默认的工作表
+    wb.remove(wb['Sheet'])
+
+    change_sheet_style(ws1)
+    change_sheet_style(ws2)
+    change_sheet_style(ws3)
+    # 将 Workbook 对象保存为 Excel 文件
+    excel_file_path = 'exported_data.xlsx'
+    wb.save(excel_file_path)
+    filename = '技术开展项目清单%s.xlsx' % datetime.today().strftime('%Y%m%d')
+    return send_file(excel_file_path, as_attachment=True, download_name=filename)
+
+def change_sheet_style(worksheet):
+    header_font = Font(bold=True)
+    header_fill = PatternFill(start_color='D3D3D3', end_color='D3D3D3', fill_type='solid')
+    for cell in worksheet[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+
+    # 设置表格边框
+    border = Border(left=Side(style='thin'), right=Side(style='thin'),
+                    top=Side(style='thin'), bottom=Side(style='thin'))
+
+    for row in worksheet.iter_rows(min_row=1, max_row=worksheet.max_row,
+                                min_col=1, max_col=worksheet.max_column):
+        for cell in row:
+            cell.border = border
+
+def change_color(worksheet,rownums,color):
+    logging.info('rownums:%s color:%s',rownums,color)
+    for rownum in rownums:
+        c_font = Font(color=color)
+        for cell in worksheet[rownum]:
+            cell.font = c_font
