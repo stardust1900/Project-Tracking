@@ -49,27 +49,25 @@
         </svg>
     </a>
 </div>
-<dev class="mb-3">
-    <span class="badge text-bg-info">初始</span>
-    <span class="badge text-bg-light">对接中</span>
-    <span class="badge text-bg-primary">对接完成待上线</span>
-    <span class="badge text-bg-success">已上线</span>
-    <span class="badge text-bg-warning">本周无进展</span>
-    <span class="badge text-bg-danger">两周无进展</span>
-    <span class="badge text-bg-dark">长期无进展</span>
-    <span class="badge text-bg-secondary">终止</span>
-</dev>
 {% for product in products %}
 <div class="card mb-3">
     <h3 class="card-header"> {{product.name}} <a href="/addProject?productId={{product.id}}" class="btn btn-primary">新增项目</a></h3>
     <div class="card-body">
         {% for project in projects %}
         {% if project.product.id == product.id or project.product.parent_id == product.id%}
-        <div class="p-3 mb-2 {% if project.state==0 %} bg-info text-dark{% endif %} {% if project.state==1 %} bg-light text-dark{% endif %} {% if project.state==2 %} bg-primary text-white{% endif %} {% if project.state==3 %} bg-success text-white{% endif %} {% if project.state==4 %} bg-warning text-dark{% endif %} {% if project.state==5 %} bg-danger text-white{% endif %} {% if project.state==6 %} bg-dark text-white{% endif %} {% if project.state==7 %} bg-secondary text-white{% endif %}">
+        <div>
             【{{project.product.name}}】{{project.merchant_name}} （{{project.dept.name}} {{project.manager.name}} {{project.input_date}}） 
             {% for supporter in project.supporters %}
             @{{supporter.name}}
             {% endfor %}
+            {% if project.state==0 %}<span class="badge text-bg-light">初始</span>{% endif %}
+            {% if project.state==1 %}<span class="badge text-bg-info">对接中</span>{% endif %}
+            {% if project.state==2 %}<span class="badge text-bg-primary">对接完成待上线</span>{% endif %}
+            {% if project.state==3 %}<span class="badge text-bg-success">已上线</span>{% endif %}
+            {% if project.state==4 %}<span class="badge text-bg-warning">本周无进展</span>{% endif %}
+            {% if project.state==5 %}<span class="badge text-bg-danger">两周无进展</span>{% endif %}
+            {% if project.state==6 %}<span class="badge text-bg-dark">长期无进展</span>{% endif %}
+            {% if project.state==7 %}<span class="badge text-bg-secondary">终止</span>{% endif %}
             <a href="/editProject?projectId={{project.id}}" class="link-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
