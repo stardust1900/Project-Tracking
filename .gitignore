@@ -141,3 +141,4 @@ email.txt
 *.docx
 logs
 migrations
+config.py
