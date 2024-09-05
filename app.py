@@ -111,17 +111,17 @@ def login():
     if request.method == 'POST':
         login_name=request.form['login_name']
         password = request.form['password']
-        logging.info("login_name:%s password:%s",request.form['login_name'],request.form['password'])
+        # logging.info("login_name:%s password:%s",request.form['login_name'],request.form['password'])
         hashed_password = generate_password_hash(request.form['password'])
-        logging.info(hashed_password)
+        # logging.info(hashed_password)
         user = User.query.filter(or_(User.email==login_name,User.login_name==login_name)).first()
         logging.info(user)
         if user:
             if check_password_hash(user.password,password):
                 logging.info("验证成功")
-                print(current_user)
+                # logging.info(current_user)
                 login_user(user)
-                print(current_user)
+                # logging.info(current_user)
                 # return redirect(url_for('main'))
                 return redirect(url_for('main'))
             else:
